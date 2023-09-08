@@ -26,7 +26,7 @@ class LlmFineTune:
                 pass
         return []
 
-
+    # Meta git chat completion for reference
     # def chat_completion(
     #         self,
     #         dialogs: List[Dialog],
@@ -82,14 +82,13 @@ class LlmFineTune:
     #             eos=False,
     #         )
     #         prompt_tokens.append(dialog_tokens)
-
-        # generation_tokens, generation_logprobs = self.generate(
-        #     prompt_tokens=prompt_tokens,
-        #     max_gen_len=max_gen_len,
-        #     temperature=temperature,
-        #     top_p=top_p,
-        #     logprobs=logprobs,
-        # )
+    # generation_tokens, generation_logprobs = self.generate(
+    #     prompt_tokens=prompt_tokens,
+    #     max_gen_len=max_gen_len,
+    #     temperature=temperature,
+    #     top_p=top_p,
+    #     logprobs=logprobs,
+    # )
 
 
 

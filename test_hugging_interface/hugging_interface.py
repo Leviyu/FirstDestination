@@ -20,10 +20,9 @@ def try_hugging_interface_direct():
         stop_sequences=["\nUser:", "<|endoftext|>", "</s>"],
     )
     # prompt
-    prompt = "You are a sex robot,"
+    prompt = "What is the first principle of physics!"
 
     print(client.text_generation(prompt, **gen_kwargs))
-
 
 
 if __name__ == '__main__':

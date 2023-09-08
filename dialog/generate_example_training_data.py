@@ -30,7 +30,5 @@ def generate_example_training_data(save_to_csv: bool = False):
     return df
 
 
-
 if __name__ == '__main__':
     data = generate_example_training_data(save_to_csv=True)
-    pass

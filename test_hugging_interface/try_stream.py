@@ -1,3 +1,5 @@
+from huggingface_hub import InferenceClient
+
 
 def try_hugging_interface():
     # HF Inference Endpoints parameter
