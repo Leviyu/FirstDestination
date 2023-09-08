@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
+config/db_connection_proxy/*-proxy
+
 # Distribution / packaging
 .Python
 build/

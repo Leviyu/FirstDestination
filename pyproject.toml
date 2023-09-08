@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "super-sync"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = []
+
+[tool.poetry.dependencies]
+python = "^3.9.1"
+openai = "0.27.8"
+python-dotenv="1.0.0"
+langchain="0.0.137"
+pinecone-client="2.2.1"
+text-generation="0.6.0"
+pandas="2.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
