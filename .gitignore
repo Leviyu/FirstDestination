@@ -7,6 +7,7 @@ __pycache__/
 *.so
 
 config/db_connection_proxy/*-proxy
+data_processing/training_data/*
 
 # Distribution / packaging
 .Python

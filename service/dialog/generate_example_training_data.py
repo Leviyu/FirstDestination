@@ -1,5 +1,5 @@
 import pandas as pd
-from dialog.prompt_template import PromptTemplate
+from service.dialog.prompt_template import PromptTemplate
 
 
 def sample_model(prompt):
