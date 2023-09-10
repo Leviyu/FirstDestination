@@ -1,3 +1,17 @@
+
+"""
+Llama2 Format Guide
+
+<s>[INST] <<SYS>>
+{{ system_prompt }}
+<</SYS>>
+{{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s><s>[INST] {{ user_msg_2 }} [/INST]
+"""
+
+B_S, E_S = "<s>", "</s>"
+B_INST, E_INST = "[INST]", "[/INST]"
+B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n"
+
 class PromptTemplate:
     system_prompt = None
     user_messages = []
@@ -58,15 +72,16 @@ class PromptTemplate:
             SYS = ""
 
         CONVO = ""
-        SYS = "<s>" + SYS
         for i in range(len(self.user_messages)):
             user_message, model_reply = self.user_messages[i], self.model_replies[i]
-            conversation_ = f"{user_message} [/INST] {model_reply} </s>"
-            if i != 0:
-                conversation_ = "[INST] " + conversation_
+            if i == 0:
+                system_message = f"{B_SYS}{self.system_prompt}{E_SYS}"
+            else:
+                system_message = ""
+            conversation_ = B_S + B_INST + system_message + user_message + E_INST + model_reply + E_S
             CONVO += conversation_
 
 
-        return SYS + CONVO
+        return CONVO
 
 
