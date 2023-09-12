@@ -12,6 +12,7 @@ tokenizer = transformers.AutoTokenizer.from_pretrained("bert-base-uncased")
 
 DEFAULT_USER_FIRST_MESSAGE = "{{user}} waiting for {{char}} to initiate the conversation."
 DEFAULT_MAX_TOKEN = 20000
+CHAT_MESSAGES_LOWER_LIMIT = 10
 
 class ChatFormatter:
 	def __int__(self):
@@ -23,20 +24,25 @@ class ChatFormatter:
 		training_prompt_list = []
 
 		df_chat_with_messages['chat_message_datatime'] = df_chat_with_messages['created_at.1'].apply(lambda x: parse(x))
+		df_chat_with_messages.sort_values('chat_message_datatime', inplace=True)
 
 		chat_sessions = list(df_chat_with_messages['id'].unique())
 		skipped_chat_sessions = 0
+		sample_index = 0
 		for chat_session in chat_sessions:
 			chat_messages = df_chat_with_messages.loc[df_chat_with_messages['id'] == chat_session]
-			if len(chat_messages) <= 10:
+			if len(chat_messages) <= CHAT_MESSAGES_LOWER_LIMIT:
 				skipped_chat_sessions += 1
 				continue
 			character_id = chat_messages['character_id'].values[0]
 			characters_dict = df_chat_with_characeters.loc[df_chat_with_characeters['character_id'] == character_id].head(1).to_dict(orient='records')[0]
-			chat_messages.sort_values('chat_message_datatime', inplace=True)
+			print(f'--> Working on sample {sample_index}')
 			training_prompt = self.build_prompt_give_chat_messages_for_a_session(chat_messages, characters_dict)
-			training_prompt_list.append(training_prompt)
+			if training_prompt:
+				training_prompt_list.append(training_prompt)
+				sample_index +=1
 		self.training_prompt_list = training_prompt_list
+		print(f'number of training samples are {len(training_prompt_list)}')
 		return training_prompt_list
 
 
@@ -94,25 +100,35 @@ class ChatFormatter:
 
 		finale_prompt = pt.gather_training_date()
 		num_tokens = len(tokenizer.tokenize(finale_prompt))
+		print(f'num tokens are {num_tokens}')
 		if num_tokens > DEFAULT_MAX_TOKEN:
 			finale_prompt = ""
 		return finale_prompt
 
 	def write_to_file(self, file_name: str):
-		raise NotImplementedError
+		df_data = pd.DataFrame(self.training_prompt_list, columns=['input'])
+		df_data['index'] = list(range(len(df_data)))
+		df_data.to_csv(file_name, index=False)
+
 
 
 
 if __name__ == '__main__':
 	chats_with_messages_file = str(ROOT_DIR) + '/data_processing/training_data/chats_with_messages.csv'
 	chats_with_characters_file = str(ROOT_DIR) + '/data_processing/training_data/chats_with_characters.csv'
-	df_chat_with_messages = pd.read_csv(chats_with_messages_file, nrows=1000)
+	df_chat_with_messages = pd.read_csv(chats_with_messages_file, nrows=10000)
 	df_chat_with_characters = pd.read_csv(chats_with_characters_file)
+
+	file_name = str(ROOT_DIR) + '/data_processing/training_data/formatted_chat_messages_llama2_stype.csv'
 
 	formatter = ChatFormatter()
 	formatter.format_chats(
 		df_chat_with_messages=df_chat_with_messages,
 		df_chat_with_characeters=df_chat_with_characters
 	)
+	formatter.write_to_file(file_name)
+
+	df_data = pd.read_csv(file_name)
+	print(len(df_data))
 
 
