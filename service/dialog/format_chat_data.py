@@ -9,9 +9,8 @@ import transformers
 
 tokenizer = transformers.AutoTokenizer.from_pretrained("bert-base-uncased")
 
-
 DEFAULT_USER_FIRST_MESSAGE = "{{user}} waiting for {{char}} to initiate the conversation."
-DEFAULT_MAX_TOKEN = 20000
+DEFAULT_MAX_TOKEN = 4096
 CHAT_MESSAGES_LOWER_LIMIT = 10
 
 class ChatFormatter:
@@ -37,12 +36,10 @@ class ChatFormatter:
 			character_id = chat_messages['character_id'].values[0]
 			characters_dict = df_chat_with_characeters.loc[df_chat_with_characeters['character_id'] == character_id].head(1).to_dict(orient='records')[0]
 			print(f'--> Working on sample {sample_index}')
-			training_prompt = self.build_prompt_give_chat_messages_for_a_session(chat_messages, characters_dict)
-			if training_prompt:
-				training_prompt_list.append(training_prompt)
-				sample_index +=1
+			training_prompts = self.build_prompt_give_chat_messages_for_a_session(chat_messages, characters_dict)
+			training_prompt_list.extend(training_prompts)
+			sample_index += len(training_prompts)
 		self.training_prompt_list = training_prompt_list
-		print(f'number of training samples are {len(training_prompt_list)}')
 		return training_prompt_list
 
 
@@ -58,7 +55,7 @@ class ChatFormatter:
 		system_prompt = f"System Notes:\n" + personality_prompt + fts_prompt + scenario_prompt + example_prompt
 		return system_prompt
 
-	def build_prompt_give_chat_messages_for_a_session(self, df_chat_messages: pd.DataFrame, character_dict: dict):
+	def build_prompt_give_chat_messages_for_a_session(self, df_chat_messages: pd.DataFrame, character_dict: dict) -> List[str]:
 		"""
 		To account for different scenarios of messages pattern,
 		we define a more uniform message pattern and format the chat messages accordingly
@@ -98,25 +95,24 @@ class ChatFormatter:
 			pt.add_user_message(" ".join(user_conv))
 			pt.add_model_reply(" ".join(char_conv))
 
-		finale_prompt = pt.gather_training_date()
-		num_tokens = len(tokenizer.tokenize(finale_prompt))
-		print(f'num tokens are {num_tokens}')
-		if num_tokens > DEFAULT_MAX_TOKEN:
-			finale_prompt = ""
-		return finale_prompt
+		final_prompts = pt.gather_training_data_for_all_message()
+
+		accepted_prompt = []
+		for prompt in final_prompts:
+			num_tokens = len(tokenizer.tokenize(prompt))
+			if num_tokens < DEFAULT_MAX_TOKEN:
+				accepted_prompt.append(prompt)
+		return accepted_prompt
 
 	def write_to_file(self, file_name: str):
 		df_data = pd.DataFrame(self.training_prompt_list, columns=['input'])
 		df_data['index'] = list(range(len(df_data)))
 		df_data.to_csv(file_name, index=False)
 
-
-
-
 if __name__ == '__main__':
 	chats_with_messages_file = str(ROOT_DIR) + '/data_processing/training_data/chats_with_messages.csv'
 	chats_with_characters_file = str(ROOT_DIR) + '/data_processing/training_data/chats_with_characters.csv'
-	df_chat_with_messages = pd.read_csv(chats_with_messages_file, nrows=10000)
+	df_chat_with_messages = pd.read_csv(chats_with_messages_file, nrows=1000)
 	df_chat_with_characters = pd.read_csv(chats_with_characters_file)
 
 	file_name = str(ROOT_DIR) + '/data_processing/training_data/formatted_chat_messages_llama2_stype.csv'

@@ -1,16 +1,24 @@
 
 """
 Llama2 Format Guide
+https://huggingface.co/blog/llama2#how-to-prompt-llama-2
 
 <s>[INST] <<SYS>>
 {{ system_prompt }}
 <</SYS>>
 {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s><s>[INST] {{ user_msg_2 }} [/INST]
 """
+from typing import List
 
 B_S, E_S = "<s>", "</s>"
 B_INST, E_INST = "[INST]", "[/INST]"
 B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n"
+
+CURREENT_EXCEPTIONS_LIST = [
+    "I'm sorry, but I can't assist with that."
+    "I'm sorry, but I can't generate a response to that.",
+    "I'm sorry, but I can't assist with that request."
+]
 
 class PromptTemplate:
     system_prompt = None
@@ -84,4 +92,27 @@ class PromptTemplate:
 
         return CONVO
 
+    def gather_training_data_for_each_conversation(self, user_message: str, model_reply: str) -> str:
 
+        for exception in CURREENT_EXCEPTIONS_LIST:
+            if exception in model_reply:
+                return ""
+
+        if self.system_prompt is not None:
+            SYS = f"[INST] <<SYS>>\n{self.system_prompt}\n<</SYS>>"
+        else:
+            SYS = ""
+
+        system_message = f"{B_SYS}{self.system_prompt}{E_SYS}"
+        conversation_ = B_S + B_INST + system_message + user_message + E_INST + model_reply + E_S
+
+        return conversation_
+
+    def gather_training_data_for_all_message(self) -> List[str]:
+        conversations = []
+        for i in range(len(self.user_messages)):
+            user_message, model_reply = self.user_messages[i], self.model_replies[i]
+            conversation = self.gather_training_data_for_each_conversation(user_message, model_reply)
+            if conversation:
+                conversations.append(conversation)
+        return conversations
