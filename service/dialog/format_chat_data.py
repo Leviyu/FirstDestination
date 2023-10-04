@@ -1,17 +1,19 @@
+import json
 from typing import List
-
+import datetime as dt
+from datasets import load_dataset
+import datasets
 import pandas as pd
+import huggingface_hub
 
 from dateutil.parser import parse
 from config.app_config import ROOT_DIR
+from service.dialog.prompt_config import BREAKER_PROMPT
 from service.dialog.prompt_template import PromptTemplate
-import transformers
 
-tokenizer = transformers.AutoTokenizer.from_pretrained("bert-base-uncased")
 
 DEFAULT_USER_FIRST_MESSAGE = "{{user}} waiting for {{char}} to initiate the conversation."
-DEFAULT_MAX_TOKEN = 4096
-CHAT_MESSAGES_LOWER_LIMIT = 10
+CHAT_MESSAGES_LOWER_LIMIT = 20
 
 class ChatFormatter:
 	def __int__(self):
@@ -19,43 +21,80 @@ class ChatFormatter:
 		self._chat_with_characters = None
 		self.training_prompt_list = None
 
-	def format_chats(self, df_chat_with_messages: pd.DataFrame, df_chat_with_characeters: pd.DataFrame) -> List[str]:
+	def format_chats(
+			self,
+	        df_chat_with_messages: pd.DataFrame,
+			df_chat_with_characeters: pd.DataFrame,
+			df_user_profile: pd.DataFrame
+	) -> List[str]:
 		training_prompt_list = []
 
-		df_chat_with_messages['chat_message_datatime'] = df_chat_with_messages['created_at.1'].apply(lambda x: parse(x))
-		df_chat_with_messages.sort_values('chat_message_datatime', inplace=True)
-
 		chat_sessions = list(df_chat_with_messages['id'].unique())
-		skipped_chat_sessions = 0
 		sample_index = 0
+		index = 0
 		for chat_session in chat_sessions:
 			chat_messages = df_chat_with_messages.loc[df_chat_with_messages['id'] == chat_session]
-			if len(chat_messages) <= CHAT_MESSAGES_LOWER_LIMIT:
-				skipped_chat_sessions += 1
+			index +=1
+
+			chat_message_date = parse(chat_messages['created_at.1'].values[0])
+			utc_cut_off = dt.datetime(2023,8,28).replace(tzinfo=dt.timezone.utc)
+			if len(chat_messages) <= CHAT_MESSAGES_LOWER_LIMIT or chat_message_date < utc_cut_off:
 				continue
-			character_id = chat_messages['character_id'].values[0]
-			characters_dict = df_chat_with_characeters.loc[df_chat_with_characeters['character_id'] == character_id].head(1).to_dict(orient='records')[0]
-			print(f'--> Working on sample {sample_index}')
-			training_prompts = self.build_prompt_give_chat_messages_for_a_session(chat_messages, characters_dict)
-			training_prompt_list.extend(training_prompts)
-			sample_index += len(training_prompts)
+
+			print(f"--> working on chat session {index} / {len(chat_sessions)}")
+			training_prompts_from_session = self.process_single_chat_session(
+				chat_messages,
+				df_chat_with_characeters,
+				df_user_profile,
+			)
+			if training_prompts_from_session:
+				training_prompt_list.extend(training_prompts_from_session)
 		self.training_prompt_list = training_prompt_list
 		return training_prompt_list
 
+	def process_single_chat_session(self, df_chat_messages, df_chat_with_characeters, df_user_profile):
+		try:
+			chat_messages = df_chat_messages.copy()
+			chat_messages['chat_message_datatime'] = chat_messages['created_at.1'].apply(lambda x: parse(x))
+			chat_messages = chat_messages.sort_values('chat_message_datatime')
 
-	def build_system_prompt(self, personality: str, scenario: str, fts: str, example_dialogs: str):
+			character_id = chat_messages['character_id'].values[0]
+			user_id = chat_messages['user_id'].values[0]
+			characters_dict = df_chat_with_characeters.loc[df_chat_with_characeters['character_id'] == character_id].head(1).to_dict(orient='records')[0]
+			user_profile_dict = df_user_profile.loc[df_user_profile['id'] == user_id].head(1).to_dict(orient='records')[0]
+			training_prompts = self.build_prompt_give_chat_messages_for_a_session(chat_messages, characters_dict, user_profile_dict)
+		except:
+			training_prompts = None
+
+		return training_prompts
+
+	def build_system_prompt(self, character_dict, user_profile_dict: dict):
 		"""
 		Background context for character defination and setting up the scenario on where the story happens.
 		"""
+		personality = character_dict['personality']
+		scenario = character_dict['scenario']
+		example_dialogs = character_dict['example_dialogs']
+		char_name = character_dict['name']
+		user_profile = user_profile_dict['profile']
+		user_name = user_profile_dict['name']
+
 		personality_prompt = f"You have the following personality {personality}. \n"
+		char_symbol = "{{char}}"
+		user_symbol = "{{user}}"
+		intro_prompt = f"{char_symbol}'s name: {char_name}. {char_symbol} calls {user_symbol} by {user_name} or any name introduced by {user_symbol}."
 		scenario_prompt = f"Interact with the {{user}} assuming the following scenario {scenario}.\n" if scenario else ""
 		example_prompt = f"Some example diaglos includes: {example_dialogs}" if example_dialogs else ""
-		fts_prompt = f"Your character have the following fts: {fts}. \n" if fts else ""
+		user_profile_prompt = f"About {user_symbol}: {user_profile}." if user_profile else ""
 
-		system_prompt = f"System Notes:\n" + personality_prompt + fts_prompt + scenario_prompt + example_prompt
+		system_prompt = BREAKER_PROMPT + intro_prompt + user_profile_prompt + personality_prompt + scenario_prompt + example_prompt
 		return system_prompt
 
-	def build_prompt_give_chat_messages_for_a_session(self, df_chat_messages: pd.DataFrame, character_dict: dict) -> List[str]:
+	def build_prompt_give_chat_messages_for_a_session(
+			self, df_chat_messages: pd.DataFrame,
+			character_dict: dict,
+			user_profile_dict: dict
+	) -> List[str]:
 		"""
 		To account for different scenarios of messages pattern,
 		we define a more uniform message pattern and format the chat messages accordingly
@@ -64,9 +103,10 @@ class ChatFormatter:
 		* if there is multiple messages from either the user or char, we combine them together into a single message
 		* the chat session always ends with char answering, if the last message is from user, ignore it
 		"""
+
+		is_bad_conversation = self.is_bad_conv(character_dict, user_profile_dict)
 		df_chat_messages.reset_index(inplace=True)
-		# for message in df_chat_messages.to_dict():
-		system_prompt = self.build_system_prompt(character_dict['personality'], character_dict['scenario'], character_dict['fts'], character_dict['example_dialogs'])
+		system_prompt = self.build_system_prompt(character_dict, user_profile_dict)
 		pt = PromptTemplate(system_prompt=system_prompt)
 
 		user_conv = []
@@ -95,36 +135,57 @@ class ChatFormatter:
 			pt.add_user_message(" ".join(user_conv))
 			pt.add_model_reply(" ".join(char_conv))
 
-		final_prompts = pt.gather_training_data_for_all_message()
+		# final_prompts = pt.gather_training_data_for_all_message()
+		final_prompts = pt.gather_message_with_different_conversation_length_with_conv_format()
 
-		accepted_prompt = []
-		for prompt in final_prompts:
-			num_tokens = len(tokenizer.tokenize(prompt))
-			if num_tokens < DEFAULT_MAX_TOKEN:
-				accepted_prompt.append(prompt)
-		return accepted_prompt
+		return final_prompts
 
-	def write_to_file(self, file_name: str):
-		df_data = pd.DataFrame(self.training_prompt_list, columns=['input'])
-		df_data['index'] = list(range(len(df_data)))
-		df_data.to_csv(file_name, index=False)
+	def is_bad_conv(self, character_dict: dict, user_dict: dict):
+		if not character_dict['name'] or not user_dict['name']:
+			return True
+
+		return False
+
+	def write_to_file(self, file_name: str, dataset_name: str, upload_to_hf: bool = False):
+		with open(file_name, 'w') as f:
+			for i in range(len(self.training_prompt_list)):
+				conv = self.training_prompt_list[i]
+				json.dump(conv, f)
+				if i != len(self.training_prompt_list) -1:
+					f.write('\n')
+		f.close()
+		if upload_to_hf:
+			data = datasets.Dataset.from_pandas(pd.DataFrame(data=self.training_prompt_list))
+			huggingface_hub.login(token='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')
+
+			data.push_to_hub(
+				dataset_name
+			)
+
 
 if __name__ == '__main__':
 	chats_with_messages_file = str(ROOT_DIR) + '/data_processing/training_data/chats_with_messages.csv'
 	chats_with_characters_file = str(ROOT_DIR) + '/data_processing/training_data/chats_with_characters.csv'
-	df_chat_with_messages = pd.read_csv(chats_with_messages_file, nrows=1000)
+	user_profile_file = str(ROOT_DIR) + '/data_processing/training_data/user_profile.csv'
+	df_chat_with_messages = pd.read_csv(chats_with_messages_file, nrows=20000)
+
 	df_chat_with_characters = pd.read_csv(chats_with_characters_file)
-
-	file_name = str(ROOT_DIR) + '/data_processing/training_data/formatted_chat_messages_llama2_stype.csv'
-
+	df_user_profile = pd.read_csv(user_profile_file)
 	formatter = ChatFormatter()
 	formatter.format_chats(
-		df_chat_with_messages=df_chat_with_messages,
-		df_chat_with_characeters=df_chat_with_characters
+		 df_chat_with_messages=df_chat_with_messages,
+		 df_chat_with_characeters=df_chat_with_characters,
+		 df_user_profile=df_user_profile
 	)
-	formatter.write_to_file(file_name)
+	# dataset_name = f'role_play_chat_llama2_format_v20_20k'
+	#
+	# save_to_file_name = str(ROOT_DIR) + '/data_processing/training_data/' + dataset_name + ".jsonl"
+	# formatter.write_to_file(save_to_file_name, upload_to_hf=True, dataset_name=dataset_name)
+	# df_data = pd.read_csv(save_to_file_name)
+	# file2 = str(ROOT_DIR) + '/data_processing/training_data/formatted_chat_messages_llama2_stype_v2_20k.csv'
+	# df_data = pd.read_json(save_to_file_name)
+	# df_data.head(20000).to_csv(file2, index=False)
+	pass
 
-	df_data = pd.read_csv(file_name)
-	print(len(df_data))
 
 
