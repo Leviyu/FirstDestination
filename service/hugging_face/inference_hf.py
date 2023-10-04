@@ -6,12 +6,6 @@ API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-cha
 headers = {"Authorization": "Bearer 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"}
 
 
-
-eg_simple =  """
-Imagine you are a cat, how is your morning!
-"""
-
-
 def hf_inference():
 	def query(payload):
 		response = requests.post(API_URL, headers=headers, json=payload)
@@ -36,7 +30,6 @@ def hf_inference():
 		"parameters": parameters
 
 	})
-	print(output)
 	return output
 
 

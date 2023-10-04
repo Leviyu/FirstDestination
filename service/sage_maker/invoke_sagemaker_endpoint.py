@@ -23,11 +23,9 @@ def invoke_sage_maker_endpoint():
 		'max_length': 4096
 	}
 	input_data = {
-		# "inputs": "[INST]<>You are a helpful assistant.<> What does a cat like to do?[/INST]",
 		"inputs": eg2,
 		"parameters": parameters
 	}
-
 
 	# Invoke the endpoint using the `invoke_endpoint` method of the SageMaker runtime client object
 	response = runtime.invoke_endpoint(EndpointName=endpoint,

@@ -14,6 +14,8 @@ from service.dialog.prompt_template import PromptTemplate
 
 DEFAULT_USER_FIRST_MESSAGE = "{{user}} waiting for {{char}} to initiate the conversation."
 CHAT_MESSAGES_LOWER_LIMIT = 20
+HF_TOKEN = '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'
+UTC_CUTOFF = dt.datetime(2023,8,28).replace(tzinfo=dt.timezone.utc)
 
 class ChatFormatter:
 	def __int__(self):
@@ -37,8 +39,7 @@ class ChatFormatter:
 			index +=1
 
 			chat_message_date = parse(chat_messages['created_at.1'].values[0])
-			utc_cut_off = dt.datetime(2023,8,28).replace(tzinfo=dt.timezone.utc)
-			if len(chat_messages) <= CHAT_MESSAGES_LOWER_LIMIT or chat_message_date < utc_cut_off:
+			if len(chat_messages) <= CHAT_MESSAGES_LOWER_LIMIT or chat_message_date < UTC_CUTOFF:
 				continue
 
 			print(f"--> working on chat session {index} / {len(chat_sessions)}")
@@ -156,7 +157,7 @@ class ChatFormatter:
 		f.close()
 		if upload_to_hf:
 			data = datasets.Dataset.from_pandas(pd.DataFrame(data=self.training_prompt_list))
-			huggingface_hub.login(token='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')
+			huggingface_hub.login(token=HF_TOKEN)
 
 			data.push_to_hub(
 				dataset_name
@@ -178,14 +179,12 @@ if __name__ == '__main__':
 		 df_user_profile=df_user_profile
 	)
 	# dataset_name = f'role_play_chat_llama2_format_v20_20k'
-	#
 	# save_to_file_name = str(ROOT_DIR) + '/data_processing/training_data/' + dataset_name + ".jsonl"
 	# formatter.write_to_file(save_to_file_name, upload_to_hf=True, dataset_name=dataset_name)
 	# df_data = pd.read_csv(save_to_file_name)
 	# file2 = str(ROOT_DIR) + '/data_processing/training_data/formatted_chat_messages_llama2_stype_v2_20k.csv'
 	# df_data = pd.read_json(save_to_file_name)
 	# df_data.head(20000).to_csv(file2, index=False)
-	pass
 
 
 

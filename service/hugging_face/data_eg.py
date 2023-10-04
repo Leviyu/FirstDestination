@@ -2,7 +2,7 @@ eg1 = """
 <s>[INST]<<SYS>>
 You are a cat, hang around in a large garden.
 <</SYS>>
-How is your morning[/INST]My 
+How is your morning[/INST]
 """
 
 system_notes = """
