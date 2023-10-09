@@ -55,7 +55,7 @@ class ChatFormatter:
 
 	def process_single_chat_session(self, df_chat_messages, df_chat_with_characeters, df_user_profile):
 		try:
-			chat_messages = df_chat_messages.copy()
+			chat_messages = df_chat_messages
 			chat_messages['chat_message_datatime'] = chat_messages['created_at.1'].apply(lambda x: parse(x))
 			chat_messages = chat_messages.sort_values('chat_message_datatime')
 
@@ -79,6 +79,16 @@ class ChatFormatter:
 		char_name = character_dict['name']
 		user_profile = user_profile_dict['profile']
 		user_name = user_profile_dict['name']
+
+		if personality != personality:
+			personality = None
+		if scenario != scenario:
+			scenario = None
+		if example_dialogs != example_dialogs:
+			example_dialogs = None
+		if user_profile != user_profile:
+			user_profile = None
+
 
 		personality_prompt = f"You have the following personality {personality}. \n"
 		char_symbol = "{{char}}"
@@ -106,6 +116,9 @@ class ChatFormatter:
 		"""
 
 		is_bad_conversation = self.is_bad_conv(character_dict, user_profile_dict)
+		if is_bad_conversation:
+			return []
+
 		df_chat_messages.reset_index(inplace=True)
 		system_prompt = self.build_system_prompt(character_dict, user_profile_dict)
 		pt = PromptTemplate(system_prompt=system_prompt)
@@ -168,7 +181,7 @@ if __name__ == '__main__':
 	chats_with_messages_file = str(ROOT_DIR) + '/data_processing/training_data/chats_with_messages.csv'
 	chats_with_characters_file = str(ROOT_DIR) + '/data_processing/training_data/chats_with_characters.csv'
 	user_profile_file = str(ROOT_DIR) + '/data_processing/training_data/user_profile.csv'
-	df_chat_with_messages = pd.read_csv(chats_with_messages_file, nrows=20000)
+	df_chat_with_messages = pd.read_csv(chats_with_messages_file)#, nrows=100000)
 
 	df_chat_with_characters = pd.read_csv(chats_with_characters_file)
 	df_user_profile = pd.read_csv(user_profile_file)
@@ -178,9 +191,13 @@ if __name__ == '__main__':
 		 df_chat_with_characeters=df_chat_with_characters,
 		 df_user_profile=df_user_profile
 	)
-	# dataset_name = f'role_play_chat_llama2_format_v20_20k'
-	# save_to_file_name = str(ROOT_DIR) + '/data_processing/training_data/' + dataset_name + ".jsonl"
-	# formatter.write_to_file(save_to_file_name, upload_to_hf=True, dataset_name=dataset_name)
+	dataset_name = f'role_play_chat_llama2_format_v27_100k'
+	# dataset_name = f'role_play_chat_llama2_format_v25_100k_repeat_3_5'
+	# dataset_name = f'test_sample'
+	upload_to_hf = True
+
+	save_to_file_name = str(ROOT_DIR) + '/data_processing/training_data/' + dataset_name + ".jsonl"
+	formatter.write_to_file(save_to_file_name, upload_to_hf=upload_to_hf, dataset_name=dataset_name)
 	# df_data = pd.read_csv(save_to_file_name)
 	# file2 = str(ROOT_DIR) + '/data_processing/training_data/formatted_chat_messages_llama2_stype_v2_20k.csv'
 	# df_data = pd.read_json(save_to_file_name)

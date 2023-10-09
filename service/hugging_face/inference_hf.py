@@ -2,8 +2,13 @@ import requests
 
 from service.hugging_face.data_eg import eg4
 
+
 API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf"
 headers = {"Authorization": "Bearer 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"}
+
+
+# API_URL = "https://api-inference.huggingface.co/models/RickBigL/character-role-play-chat-20k"
+# headers = {"Authorization": "Bearer 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"}
 
 
 def hf_inference():

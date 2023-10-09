@@ -45,23 +45,24 @@ SYSTEM_S = "system"
 BOT_S = "gpt"
 
 
-class PromptTemplate:
-    system_prompt = None
-    user_messages = []
-    model_replies = []
+class PromptTemplate():
+
 
     def __init__(self, system_prompt=None):
+        self.system_prompt = None
+        self.user_messages = []
+        self.model_replies = []
         system_prompt = system_prompt.replace("\n", "")
         system_prompt = system_prompt.replace("\t", "")
         system_prompt = system_prompt.replace("  ", "")
         self.system_prompt = system_prompt
 
-    def add_user_message(self, message: str, return_prompt=True):
+    def add_user_message(self, message: str, return_prompt=False):
         self.user_messages.append(message)
         if return_prompt:
             return self.build_prompt()
 
-    def add_model_reply(self, reply: str, includes_history=True, return_reply=True):
+    def add_model_reply(self, reply: str, includes_history=False, return_reply=False):
         reply_ = reply.replace(self.build_prompt(), "") if includes_history else reply
         self.model_replies.append(reply_)
         if len(self.user_messages) != len(self.model_replies):
@@ -104,7 +105,7 @@ class PromptTemplate:
     def gather_training_date_for_multi_conversation(self, user_messages: List[str], model_replies: List[str]):
 
         if self.system_prompt is not None:
-            SYS = f"[INST] <<SYS>>\n{self.system_prompt}\n<</SYS>>"
+            SYS = f"[INST] <<SYS>>\n{self.system_prompt}\n<</SYS>>\n\n"
         else:
             SYS = ""
 
@@ -156,7 +157,7 @@ class PromptTemplate:
 
     def gather_messages_with_different_conversation_length(self):
 
-        num_of_conversations_length = [1]
+        num_of_conversations_length = [3,5]
         all_conversations = []
 
         for conv_length in num_of_conversations_length:
@@ -172,7 +173,7 @@ class PromptTemplate:
 
 
     def gather_message_with_different_conversation_length_with_conv_format(self):
-        num_of_conversations_length = [3]
+        num_of_conversations_length = [1]
         all_conversations = []
 
         for conv_length in num_of_conversations_length:
@@ -182,10 +183,11 @@ class PromptTemplate:
                 conversation = self.gather_training_date_for_multi_conversation_with_conv_format(user_messages, model_replies)
                 if not conversation:
                     continue
-                conversation_list = [""+self.flat_dict(x) for x in conversation['conversations']]
 
-                token_length = len(encoding.encode("".join(conversation_list)))
-                if token_length < DEFAULT_MAX_TOKEN * 0.8:
+                conversation_list = [" "+self.flat_dict(x) for x in conversation['conversations']]
+                token_length = len(encoding.encode(" ".join(conversation_list)))
+
+                if token_length < DEFAULT_MAX_TOKEN * 0.7:
                     all_conversations.append(conversation)
 
         return all_conversations
