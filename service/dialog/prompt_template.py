@@ -37,7 +37,9 @@ CURREENT_EXCEPTIONS_LIST = [
     "I'm sorry, but I can't assist with that."
     "I'm sorry, but I can't generate a response to that.",
     "I'm sorry, but I can't assist with that request.",
-    "but I can't assist with that request"
+    "I can't generate that story for you",
+    "but I can't assist with that request",
+    "unable to assist"
 ]
 
 USER_S = "human"
@@ -173,7 +175,7 @@ class PromptTemplate():
 
 
     def gather_message_with_different_conversation_length_with_conv_format(self):
-        num_of_conversations_length = [1]
+        num_of_conversations_length = [3]
         all_conversations = []
 
         for conv_length in num_of_conversations_length:
