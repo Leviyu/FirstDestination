@@ -2,18 +2,6 @@ import requests
 
 from service.hugging_face.data_eg import *
 
-# API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf"
-# headers = {"Authorization": "Bearer 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"}
-
-
-
-# API_URL = "https://api-inference.huggingface.co/models/RickBigL/llama2_13b_v26_50k"
-# headers = {"Authorization": "Bearer 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"}
-
-# API_URL = "https://api-inference.huggingface.co/models/RickBigL/gugu_mistralai_role_play_v2"
-# headers = {"Authorization": "Bearer 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"}
-
-
 API_URL = "https://bejbgqn2pfs34iw3.us-east-1.aws.endpoints.huggingface.cloud"
 headers = {
 	"Authorization": "Bearer lIsdDdEdcbgcESmHoukTLdxXunOvIRFBIKVOmMptAMzzAYPhFtEieebnlamshHPrpuJMFfgWTMCThpNOdjaIsfJeFjeCupDsZGgsaacfCulgRGUcfINSOQrLXqzgdaNF",
