@@ -1,8 +1,17 @@
 import requests
+from fastchat.conversation import get_conv_template
 
+from service.format_text_messages.example_conv import conv1, conv2
+from service.format_text_messages.text_config import SYS_MESSAGE
 from service.hugging_face.data_eg import *
 
-API_URL = "https://bejbgqn2pfs34iw3.us-east-1.aws.endpoints.huggingface.cloud"
+# API_URL = "https://bejbgqn2pfs34iw3.us-east-1.aws.endpoints.huggingface.cloud"
+# headers = {
+# 	"Authorization": "Bearer lIsdDdEdcbgcESmHoukTLdxXunOvIRFBIKVOmMptAMzzAYPhFtEieebnlamshHPrpuJMFfgWTMCThpNOdjaIsfJeFjeCupDsZGgsaacfCulgRGUcfINSOQrLXqzgdaNF",
+# 	"Content-Type": "application/json"
+# }
+
+API_URL = "https://ieaw93t6lrigwq6l.us-east-1.aws.endpoints.huggingface.cloud"
 headers = {
 	"Authorization": "Bearer lIsdDdEdcbgcESmHoukTLdxXunOvIRFBIKVOmMptAMzzAYPhFtEieebnlamshHPrpuJMFfgWTMCThpNOdjaIsfJeFjeCupDsZGgsaacfCulgRGUcfINSOQrLXqzgdaNF",
 	"Content-Type": "application/json"
@@ -56,27 +65,33 @@ Reaches my hands carefully down your pants and strokes your bare inner thigh
 [INST]
 '''
 
+
+
+
 def hf_inference():
 	def query(payload):
 		response = requests.post(API_URL, headers=headers, json=payload)
 		return response.json()
 
+	conv = conv1
+	input = conv.get_prompt()
+
 	parameters = {
 		# 'repetition_penalty': 4,
-		'length_penalty': 0.5,
+		# 'length_penalty': 0.5,
 		'temperature': 0.95,
 		# 'max_gen_len': 2048,
 		# 'min_length': 500,
 		# 'max_length': 2048,
-		'top_p': 0.85,
+		'top_p': 0.95,
 		'return_full_text': False,
-		'max_new_tokens': 1596,
+		'max_new_tokens': 5596,
 		# 'max_new_length': 4096,
 		# 'do_sample': True
 	}
 
 	output = query({
-		"inputs": input4,
+		"inputs": input,
 		"parameters": parameters
 	})
 	print(output)
