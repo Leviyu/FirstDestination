@@ -2,7 +2,7 @@
 import boto3
 import json
 
-from service.hugging_face.data_eg import eg2
+from data.example_chat_message.example_chat import eg2
 
 
 def invoke_sage_maker_endpoint():

@@ -1,9 +1,6 @@
 import requests
-from fastchat.conversation import get_conv_template
 
-from service.format_text_messages.example_conv import conv1, conv2
-from service.format_text_messages.text_config import SYS_MESSAGE
-from service.hugging_face.data_eg import *
+from service.format_text_messages.example_conv import conv2
 
 # API_URL = "https://bejbgqn2pfs34iw3.us-east-1.aws.endpoints.huggingface.cloud"
 # headers = {

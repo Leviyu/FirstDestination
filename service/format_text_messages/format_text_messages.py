@@ -143,9 +143,9 @@ class FormatTextMessages():
 
 if __name__ == "__main__":
 	agent = FormatTextMessages()
-	agent.read_folder(str(ROOT_DIR) + "/data_processing/self_data/", 100)
+	agent.read_folder(str(ROOT_DIR) + "/data_processing/text_messages/", 100)
 
 	name = "text_messages_v2"
-	output_file = str(ROOT_DIR) + f"/data_processing/self_data/{name}.jsonl"
+	output_file = str(ROOT_DIR) + f"/data_processing/text_messages/{name}.jsonl"
 	agent.output_into_training_format(file_name=output_file, dataset_name=name, upload_to_hf=True)
 
