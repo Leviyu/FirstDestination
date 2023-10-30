@@ -1,3 +1,8 @@
+# customized ignore
+service/hugging_face/data_eg.py
+data_processing/self_data/*
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
