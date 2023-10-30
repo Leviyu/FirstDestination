@@ -1,8 +1,10 @@
 # FirstDestination
 
-This repository is a tool designed to train/fine-tune personalzied chat bot. It is trained on fined tuned on top of open source LLM with user information, currently only support text messages. 
+FistDestination is a application that uses user data to build a digital copy (personal assistant) of the user and and allow user to interacte with it. 
 
-FistDestination is a application that uses user data to build a digital copy and interacte with it. 
+This repository is a tool designed to train/fine-tune personalzied chat bot. 
+
+The assistant is fined tuned on top of open source LLM with user information, currently only support text messages. 
 
 # Support
 |          | support    | 
