@@ -1,20 +1,19 @@
 import json
 from typing import List
 import datetime as dt
-from datasets import load_dataset
 import datasets
 import pandas as pd
 import huggingface_hub
 
 from dateutil.parser import parse
 from config.app_config import ROOT_DIR
+from data.auth.auth_config import HF_TOKEN
 from service.dialog.prompt_config import BREAKER_PROMPT
 from service.dialog.prompt_template import PromptTemplate
 
 
 DEFAULT_USER_FIRST_MESSAGE = "{{user}} waiting for {{char}} to initiate the conversation."
 CHAT_MESSAGES_LOWER_LIMIT = 20
-HF_TOKEN = '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'
 UTC_CUTOFF = dt.datetime(2023,8,28).replace(tzinfo=dt.timezone.utc)
 
 class ChatFormatter:
@@ -31,7 +30,6 @@ class ChatFormatter:
 		training_prompt_list = []
 
 		chat_sessions = list(df_sessions['id.2'].unique())
-		sample_index = 0
 		index = 0
 		for chat_session in chat_sessions:
 			index +=1
@@ -146,7 +144,6 @@ class ChatFormatter:
 			pt.add_user_message(" ".join(user_conv))
 			pt.add_model_reply(" ".join(char_conv))
 
-		# final_prompts = pt.gather_training_data_for_all_message()
 		final_prompts = pt.gather_message_with_different_conversation_length_with_conv_format()
 
 		return final_prompts
@@ -167,33 +164,22 @@ class ChatFormatter:
 				dataset_name
 			)
 
-
 if __name__ == '__main__':
-	chat_sessions = str(ROOT_DIR) + '/data_processing/training_data/chats_2000_sessions.csv'
+	folder_dir = str(ROOT_DIR) + '/data/training_data/'
+	chat_sessions = folder_dir + 'chats_2000_sessions.csv'
+	chat_messages = folder_dir + 'chat_messages.csv'
 	df_sessions = pd.read_csv(chat_sessions)
+	df_messages = pd.read_csv(chat_messages)
 
-	file_names = [
-		'p_10_04_07',
-		'p_10_01_03',
-		'p_10_08_09'
-	]
-	df_messages = pd.DataFrame()
-	for file_name in file_names:
-		file_path = str(ROOT_DIR) + f'/data_processing/training_data/{file_name}.csv'
-		df_temp = pd.read_csv(file_path)
-		df_messages = pd.concat([df_messages, df_temp])
+	dataset_name = f'role_play_chat_llama2_format_v25_100k_repeat_3_5'
+	upload_to_hf = True
+	save_to_file_name = folder_dir + dataset_name + ".jsonl"
 
 	formatter = ChatFormatter()
 	formatter.format_chats(
 		df_messages=df_messages,
 		df_sessions=df_sessions
 	)
-	dataset_name = f'role_play_chat_v30'
-	# dataset_name = f'role_play_chat_llama2_format_v25_100k_repeat_3_5'
-	# dataset_name = f'test_sample'
-	upload_to_hf = True
-
-	save_to_file_name = str(ROOT_DIR) + '/data_processing/training_data/' + dataset_name + ".jsonl"
 	formatter.write_to_file(save_to_file_name, upload_to_hf=upload_to_hf, dataset_name=dataset_name)
 
 

@@ -10,10 +10,9 @@ from fastchat.conversation import get_conv_template, Conversation
 from config.app_config import ROOT_DIR
 from service.dialog.format_chat_data import HF_TOKEN
 from service.dialog.prompt_template import USER_S, SYSTEM_S, BOT_S
-from service.format_text_messages.text_config import SYS_MESSAGE
+from data.prompt_config.digit_self_promot_config import SYS_MESSAGE
 
 SYSTEM_MESSAGE = '''
-You are Rick, 
 '''
 
 ROLE_ASS = "ASSISTANT"
@@ -24,7 +23,7 @@ ROLE_USER = "USER"
 class FormatTextMessages():
 	def __init__(self):
 		self.conversations = []
-
+		self.num_conv_round = 10
 
 	def output_into_training_format(self, file_name: str, dataset_name: str, upload_to_hf: bool):
 		output_conv_list = []
@@ -47,24 +46,18 @@ class FormatTextMessages():
 			)
 
 	def format_conversations(self, conversation: Conversation):
-
 		conv_list = []
 		system_message = {
 			 "from": SYSTEM_S,
 			 "value": SYS_MESSAGE
 		}
-
 		length = len(conversation.messages)
-		conv_round = 10
-
-		for i in range(0, length, conv_round):
-
+		for i in range(0, length, self.num_conv_round):
 			j = i
 			current_conv = [system_message]
-			while j < i + conv_round and j < length-1:
+			while j < i + self.num_conv_round and j < length-1:
 				user_message = conversation.messages[j]
 				assistant_message = conversation.messages[j+1]
-
 				j += 2
 				if user_message[1] == "" or assistant_message[1] == "":
 					continue
@@ -83,17 +76,14 @@ class FormatTextMessages():
 			if len(current_conv) >= 6:
 				conv_list.append({'conversations': current_conv})
 
-
 		return conv_list
 
 	def reduce_conv(self, conversation: Conversation) -> Conversation:
-
 		new_messages = []
 		conversation.messages.insert(0,
 			['USER', "**waiting for Rick to initiate messages**"]
 		)
 		for message in conversation.messages:
-
 			if new_messages == []:
 				new_messages.append(message)
 				continue
@@ -108,15 +98,11 @@ class FormatTextMessages():
 		conversation.messages = new_messages
 		return conversation
 
-
-
 	def filter_message(self, message):
 		message = message.replace("\n", "")
 		message = message.replace("\t", "")
 		message = message.replace("  ", "")
 		return message
-
-
 
 	def read_folder(self, folder_path: str, max_file: int):
 		onlyfiles = [f for f in listdir(folder_path) if isfile(join(folder_path, f))][:max_file]
@@ -137,15 +123,16 @@ class FormatTextMessages():
 				conv.append_message(conv.roles[0], line)
 			last_line = line
 		conv.set_system_message(SYS_MESSAGE)
-		# print(conv.get_prompt())
 		new_conv = self.reduce_conv(conv)
 		self.conversations.append(new_conv)
 
 if __name__ == "__main__":
 	agent = FormatTextMessages()
-	agent.read_folder(str(ROOT_DIR) + "/data_processing/text_messages/", 100)
+	folder_dir = str(ROOT_DIR) + "/data/text_messages/"
+	hf_dataset_name = 'text_messages_v2'
+	max_file = 100
 
-	name = "text_messages_v2"
-	output_file = str(ROOT_DIR) + f"/data_processing/text_messages/{name}.jsonl"
-	agent.output_into_training_format(file_name=output_file, dataset_name=name, upload_to_hf=True)
+	agent.read_folder(folder_dir, max_file)
+	output_file = folder_dir + f'{hf_dataset_name}.jsonl'
+	agent.output_into_training_format(file_name=output_file, dataset_name=hf_dataset_name, upload_to_hf=True)
 

@@ -1,6 +1,6 @@
 from fastchat.conversation import get_conv_template
 
-from service.format_text_messages.text_config import SYS_MESSAGE, SYS_MESSAGE2
+from data.prompt_config.digit_self_promot_config import SYS_MESSAGE, SYS_MESSAGE2
 
 conv1 = get_conv_template("llama-2")
 conv1.set_system_message(SYS_MESSAGE)

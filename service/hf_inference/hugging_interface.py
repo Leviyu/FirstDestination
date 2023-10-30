@@ -2,10 +2,13 @@ from text_generation import InferenceAPIClient
 from text_generation import Client
 from huggingface_hub import InferenceClient
 
+from data.auth.auth_config import HF_TOKEN
+
+
 def try_hugging_interface_direct():
     # HF Inference Endpoints parameter
     endpoint_url = "https://j88bxwy5fyxmekwp.us-east-1.aws.endpoints.huggingface.cloud"
-    hf_token = "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"
+    hf_token = HF_TOKEN
 
     # Streaming Client
     client = InferenceClient(endpoint_url, token=hf_token)

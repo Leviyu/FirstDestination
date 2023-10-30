@@ -1,5 +1,5 @@
 # customized ignore
-data/example_chat_message/example_chat.py
+data/example_chat_message/*
 data/text_messages/*
 data/training_data/*
 

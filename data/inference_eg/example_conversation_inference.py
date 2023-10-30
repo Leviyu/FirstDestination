@@ -1,19 +1,3 @@
-import requests
-
-from service.format_text_messages.example_conv import conv2
-
-# API_URL = "https://bejbgqn2pfs34iw3.us-east-1.aws.endpoints.huggingface.cloud"
-# headers = {
-# 	"Authorization": "Bearer lIsdDdEdcbgcESmHoukTLdxXunOvIRFBIKVOmMptAMzzAYPhFtEieebnlamshHPrpuJMFfgWTMCThpNOdjaIsfJeFjeCupDsZGgsaacfCulgRGUcfINSOQrLXqzgdaNF",
-# 	"Content-Type": "application/json"
-# }
-
-API_URL = "https://ieaw93t6lrigwq6l.us-east-1.aws.endpoints.huggingface.cloud"
-headers = {
-	"Authorization": "Bearer lIsdDdEdcbgcESmHoukTLdxXunOvIRFBIKVOmMptAMzzAYPhFtEieebnlamshHPrpuJMFfgWTMCThpNOdjaIsfJeFjeCupDsZGgsaacfCulgRGUcfINSOQrLXqzgdaNF",
-	"Content-Type": "application/json"
-}
-
 
 input1 = '''
 <s>[INST] <<SYS>> 
@@ -61,39 +45,3 @@ Reaches my hands carefully down your pants and strokes your bare inner thigh
 *Moves my fingers to Marissa's pussy and slowly, and gently inserts them into it* You like it bitch?
 [INST]
 '''
-
-
-
-
-def hf_inference():
-	def query(payload):
-		response = requests.post(API_URL, headers=headers, json=payload)
-		return response.json()
-
-	conv = conv2
-	input = conv.get_prompt()
-
-	parameters = {
-		# 'repetition_penalty': 4,
-		'length_penalty': 0.5,
-		'temperature': 0.86,
-		# 'max_gen_len': 2048,
-		# 'min_length': 500,
-		# 'max_length': 2048,
-		'top_p': 0.86,
-		'return_full_text': False,
-		'max_new_tokens': 5596,
-		# 'max_new_length': 4096,
-		# 'do_sample': True
-	}
-
-	output = query({
-		"inputs": input,
-		"parameters": parameters
-	})
-	print(output)
-	return output
-
-
-if __name__ == '__main__':
-	hf_inference()

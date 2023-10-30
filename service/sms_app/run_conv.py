@@ -1,18 +1,14 @@
 import base64
 import json
-import os
-
 import websocket
 from twilio.rest import Client
-import asyncio
-import websockets
 
-SID = 'ACdc1260be77e49c7942b4c208fb2b8e73'
-auth_token = 'a3f8ad2ddd14092137692a849cb96bf1'
+from data.auth.auth_config import TEXT_CONV_ID, TEXT_CONV_TOKEN, TEXT_CONV_SESSION_ID
+
+SID = TEXT_CONV_ID
+auth_token = TEXT_CONV_TOKEN
 client = Client(SID, auth_token)
-
-conversation_id = 'CHa07976dbd7764a249699f5d32cb170c9'
-
+conversation_id = TEXT_CONV_SESSION_ID
 
 def web_socket():
     # Create the WebSocket URL
@@ -52,8 +48,7 @@ def run_conv():
   conv = "what up bro"
   message = client.conversations.v1.conversations('CHa07976dbd7764a249699f5d32cb170c9').messages.create(author='system', body=conv)
 
-
-def test_me():
+def test_single_conversation():
     import websocket
     def on_message(wsapp, message):
         print(message)

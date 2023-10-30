@@ -1,6 +1,8 @@
 import os
 import openai
 
+from data.auth.auth_config import OPENAI_API_KEY
+
 
 def gpt_example():
     messages = []
@@ -8,7 +10,7 @@ def gpt_example():
                      "content": "Answer the question like Trump"})
     messages.append({"role": "user", "content": "What is the color of my cat Cindy"})
 
-    openai.api_key = "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"
+    openai.api_key = OPENAI_API_KEY
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",

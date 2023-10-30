@@ -1,15 +1,12 @@
-
 import boto3
 import json
 
-from data.example_chat_message.example_chat import eg2
-
+from data.auth.auth_config import AWS_KEY, AWS_SECRET
 
 def invoke_sage_maker_endpoint():
-	# Create a SageMaker runtime client object using your IAM role ARN
 	runtime = boto3.client('sagemaker-runtime',
-						   aws_access_key_id='AKIA2TOOM5H45TSBVX5C',
-						   aws_secret_access_key='CRDxrhccHbLe8BGAVj8qVDHG0VYs73yVcXQ/ViuM',
+						   aws_access_key_id=AWS_KEY,
+						   aws_secret_access_key=AWS_SECRET,
 						   # aws_session_token=<your-session-token>,
 						   region_name='us-east-2'
 	)
@@ -23,7 +20,7 @@ def invoke_sage_maker_endpoint():
 		'max_length': 4096
 	}
 	input_data = {
-		"inputs": eg2,
+		"inputs": "What is the first principle of physics!",
 		"parameters": parameters
 	}
 
