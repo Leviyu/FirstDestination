@@ -1,7 +1,5 @@
 # customized ignore
-data/example_chat_message/*
-data/text_messages/*
-data/training_data/*
+data/*
 
 
 # Byte-compiled / optimized / DLL files
